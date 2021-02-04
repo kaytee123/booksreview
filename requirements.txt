@@ -1,0 +1,7 @@
+# This file is used by pip to install required python packages
+# Usage: pip install -r requirements.txt
+
+
+PyMongo==3.11.2
+Flask-PyMongo==2.3.0 
+Flask==1.1.2

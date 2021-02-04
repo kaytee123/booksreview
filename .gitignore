@@ -4,3 +4,9 @@ core.python*
 env.py
 __pycache__/
 *.py[cod]
+
+venv/
+instance/
+htmlcov/
+.pytest_cache/
+.coverage
