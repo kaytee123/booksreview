@@ -1,28 +1,33 @@
 from bson.objectid import ObjectId
 from ..shared.command import Command
+from ..shared.filter import Filter
+from ..shared.result import Result, Error
 
 
 class Book:
-    def __init__(self, id, title, author, cover_image_link, purchase_link, genre, summary, created_at):
+    def __init__(self, id, title, author, cover_image_link, purchase_link, genre, summary, created_at, reviews):
         self.id = id
         self.title = title
+        self.author = author
         self.cover_image_link = cover_image_link
         self.purchase_link = purchase_link
         self.genre = genre
         self.summary = summary
         self.created_at = created_at
-
-    def to_dict(self):
-        return self.__dict__
+        self.reviews = reviews
 
     @staticmethod
     def create(book):
         validity = Book.validate(book)
 
-        if validity.get('valid') is False:
-            return validity
+        if validity['valid'] is False:
+            return Result.err(Error(
+                validity['message'],
+                'USERINPUT',
+                validity['errors']
+            ))
 
-        return Book(
+        return Result.ok(Book(
             id=str(ObjectId(book.get('id'))),
             title=book.get('title'),
             author=book.get('author'),
@@ -30,59 +35,91 @@ class Book:
             purchase_link=book.get('purchaseLink'),
             genre=book.get('genre'),
             summary=book.get('summary'),
-            created_at=book.get('createdAt')
-        )
+            created_at=book.get('createdAt'),
+            reviews=book.get('reviews', [])
+        ))
 
     @ staticmethod
     def validate(book):
-        errors = []
+        errors = {}
 
-        if book.get('title') is not str or book.get('title') == '':
-            errors.append({'title': 'Title is required'})
+        if not book.get('title') or book.get('title') == '':
+            errors['title'] = 'Title is required'
 
-        if book.get('author') is not str or book.get('author') == '':
-            errors.append({'author': 'Author is required'})
+        if not book.get('author') or book.get('author') == '':
+            errors['author'] = 'Author is required'
 
-        if book.get('coverImageLink') is not str or book.get('coverImageLink') == '':
-            errors.append({'coverImageLink': 'Cover is required'})
+        if not book.get('coverImageLink') or book.get('coverImageLink') == '':
+            errors['coverImageLink'] = 'Cover is required'
 
-        if book.get('purchaseLink') is not str or book.get('purchaseLink') == '':
-            errors.append({'purchaseLink': 'Purchase Link is required'})
+        if not book.get('purchaseLink') or book.get('purchaseLink') == '':
+            errors['purchaseLink'] = 'Purchase Link is required'
 
-        if book.get('genre') is not str or book.get('genre') == '':
-            errors.append({'genre': 'Genre is required'})
+        if not book.get('genre') or book.get('genre') == '':
+            errors['genre'] = 'Genre is required'
 
-        if book.get('summary') is not str or book.get('summary') == '':
-            errors.append({'summary': 'Summary is required'})
+        if not book.get('summary') or book.get('summary') == '':
+            errors['summary'] = 'Summary is required'
+
+        message = ''
+        for key in errors:
+            message += errors[key] + '. '
 
         return {
-            'valid': True if len(errors) else False,
-            'errors': errors
+            'valid': True if len(errors) == 0 else False,
+            'errors': errors,
+            'message': message
         }
 
 
 class BookMapper:
-    @ staticmethod
+    @staticmethod
     def to_domain(raw_book):
         return Book(
-            id=str(raw_book.get('_id')),
-            title=raw_book.get('title'),
-            author=raw_book.get('author'),
-            cover_image_link=raw_book.get('coverImageLink'),
-            purchase_link=raw_book.get('purchaseLink'),
-            genre=raw_book.get('genre'),
-            summary=raw_book.get('summary'),
-            created_at=raw_book.get('createdAt')
+            id=str(raw_book.get('_id', None)),
+            title=raw_book.get('title', None),
+            author=raw_book.get('author', None),
+            cover_image_link=raw_book.get('coverImageLink', None),
+            purchase_link=raw_book.get('purchaseLink', None),
+            genre=raw_book.get('genre', None),
+            summary=raw_book.get('summary', None),
+            created_at=raw_book.get('createdAt', None),
+            reviews=raw_book.get('reviews', None)
         )
 
-    @ staticmethod
+    @staticmethod
     def to_dict(book: Book, id_shape='id'):
         return {
             id_shape: book.id,
-            'title': book.title
+            'title': book.title,
+            'author': book.author,
+            'coverImageLink': book.cover_image_link,
+            'purchaseLink': book.purchase_link,
+            'genre': book.genre,
+            'summary': book.summary,
+            'createdAt': book.created_at,
+            'reviews': book.reviews
         }
 
-    @ staticmethod
+    @staticmethod
+    def for_update(data: dict):
+        update = {}
+
+        if data['title']:
+            update['title'] = data['title']
+        if data['author']:
+            update['author'] = data['author']
+        # if data['coverImageLink']:
+        #     update['coverImageLink'] = data['coverImageLink']
+        # if data['purchaseLink']:
+        #     update['purchaseLink'] = data['purchaseLink']
+        if data['genre']:
+            update['genre'] = data['genre']
+        # if data['summary']:
+        #     update['summary'] = data['summary']
+        return update
+
+    @staticmethod
     def to_persistence(book: Book):
         return BookMapper.to_dict(book, id_shape='_id')
 
@@ -96,23 +133,75 @@ class BookRepo:
         doc_id = books.insert_one(new_book).inserted_id
         doc = books.find_one({'_id': doc_id})
 
-        return BookMapper.to_domain(doc)
+        return Result.ok(BookMapper.to_domain(doc))
 
     @ staticmethod
-    def find(query, db):
+    def find(query: Filter, db):
         books = db['bookReview']['books']
-        docs = books.find()
-        result = [BookMapper.to_domain(doc) for doc in docs]
+        qry = {'title': {"$regex": '^'+query.title}}
+        docs = books.find(qry).sort(query.sort, query.order).limit(
+            query.take).skip(query.skip)
 
-        return result
+        if not docs:
+            return Result.err(Error(
+                'Book not found',
+                'NOTFOUND',
+                {}
+            ))
+
+        books = [BookMapper.to_domain(doc) for doc in docs]
+        return Result.ok(books)
 
     @ staticmethod
-    def find_by_id(id, db):
+    def find_by_id(book_id, db):
         books = db['bookReview']['books']
-        doc = books.find_book({'_id': id})
+        doc = books.find_one({'_id': book_id})
+
+        if not doc:
+            return Result.err(Error(
+                'Book not found',
+                'NOTFOUND',
+                {'id': book_id}
+            ))
+
         book = BookMapper.to_domain(doc)
+        return Result.ok(book)
 
-        return book
+    @ staticmethod
+    def update(book_id: str, update: dict, db):
+        books = db['bookReview']['books']
+        book_update = BookMapper.for_update(update)
+        book_update = {'$set': book_update}
+
+        books.update_one({'_id': book_id}, book_update)
+        doc = books.find_one({'_id': book_id})
+
+        return Result.ok(BookMapper.to_domain(doc))
+
+    @ staticmethod
+    def remove(book_id, db):
+        books = db['bookReview']['books']
+
+        try:
+            doc = books.find_one({'_id': book_id})
+            if not doc:
+                return Result.err(Error(
+                    'Book not found',
+                    'NOTFOUND',
+                    {'id': book_id}
+                ))
+
+            # Deleting
+            books.delete_one({'_id': book_id})
+
+            book = BookMapper.to_domain(doc)
+            return Result.ok(book)
+        except Exception as e:
+            return Result.err(Error(
+                'Error occured while removing book',
+                'TECHNICAL',
+                {'id': book_id, 'e': e}
+            ))
 
 
 # Commands
@@ -123,11 +212,20 @@ class AddBook(Command):
 
     @staticmethod
     def handle(data, context):
-        book = Book.create(data)
+        book_or_err = Book.create(data)
 
-        saved_book = BookRepo.add(book, context.get('database'))
-        # return BookMapper.to_dict(book)
-        return saved_book.to_dict()
+        if book_or_err.is_err():
+            return book_or_err
+
+        saved_or_err = BookRepo.add(
+            book_or_err.is_ok(),
+            context.get('database')
+        ).match(
+            lambda book: Result.ok(BookMapper.to_dict(book)),
+            lambda err: Result.err(err)
+        )
+
+        return saved_or_err
 
 
 class FindBook(Command):
@@ -137,19 +235,42 @@ class FindBook(Command):
 
     @staticmethod
     def handle(data, context):
-        book = BookRepo.find_by_id(data.get('id'), context.get('database'))
-        return BookMapper.to_dict(book)
+
+        if not data.get('id', None):
+            return Result.err(Error('Book id is requires', 'USERINPUT'))
+
+        book_or_err = BookRepo.find_by_id(
+            data['id'],
+            context.get('database', None)
+        )
+
+        result = book_or_err.match(
+            lambda book: Result.ok(BookMapper.to_dict(book)),
+            lambda err: Result.err(err)
+        )
+
+        return result
 
 
 class FindBooks(Command):
     @staticmethod
     def name():
-        return 'AddBooks'
+        return 'FindBooks'
 
     @staticmethod
     def handle(data: dict, context: dict):
-        books = BookRepo.find(data, context.get('database'))
-        result = [BookMapper.to_dict(book) for book in books]
+
+        books_or_err = BookRepo.find(
+            Filter.create(data),
+            context.get('database', None)
+        )
+
+        def to_dict(books): return [BookMapper.to_dict(book) for book in books]
+
+        result = books_or_err.match(
+            lambda books: Result.ok(to_dict(books)),
+            lambda err: Result.err(err)
+        )
 
         return result
 
@@ -161,8 +282,33 @@ class EditBook(Command):
 
     @staticmethod
     def handle(data, context):
-        """ Unimplemented """
-        pass
+
+        # Checking Parameters
+        if not data.get('id', None):
+            return Result.err(Error('Book id is requires', 'USERINPUT'))
+
+        if not data.get('update', None):
+            return Result.err(Error('Book update is requires', 'USERINPUT'))
+
+        # Validate Update
+        # update_or_err = Book.validate_update(data['update'])
+
+        # if update_or_err.is_err():
+        #     return update_or_err
+
+        # Updating
+        book_or_err = BookRepo.update(
+            data['id'],
+            data['update'],
+            context.get('database', None)
+        )
+
+        result = book_or_err.match(
+            lambda book: Result.ok(BookMapper.to_dict(book)),
+            lambda err: Result.err(err)
+        )
+
+        return result
 
 
 class RemoveBook(Command):
@@ -172,8 +318,21 @@ class RemoveBook(Command):
 
     @staticmethod
     def handle(data, context):
-        """ Unimplemented """
-        pass
+
+        if not data.get('id', None):
+            return Result.err(Error('Book id is requires', 'USERINPUT'))
+
+        deleted_or_err = BookRepo.remove(
+            data['id'],
+            context.get('database', None)
+        )
+
+        result = deleted_or_err.match(
+            lambda book: Result.ok(BookMapper.to_dict(book)),
+            lambda err: Result.err(err)
+        )
+
+        return result
 
 
 class ReviewBook(Command):
@@ -183,8 +342,10 @@ class ReviewBook(Command):
 
     @staticmethod
     def handle(data, context):
-        """ Unimplemented """
         pass
+
+
+commands = [AddBook, FindBook, FindBooks, EditBook, RemoveBook]
 
 
 # Service

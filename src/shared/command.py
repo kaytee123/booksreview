@@ -1,4 +1,5 @@
 import abc
+from .result import Result, Error
 
 
 class CommandRunner:
@@ -11,13 +12,35 @@ class CommandRunner:
 
         return self
 
-    def execute(self, command_data, context={}):
-        command = self.commands[command_data['name']]
+    def execute(self, raw_command: dict, context={}):
+        command_name = raw_command.get('name', None)
+        if command_name is None:
+            err = Error("Command name is required", "VALIDATION", raw_command)
+            return Result.err(err)
 
+        command = self.commands.get(command_name, None)
         if command is None:
-            return 'Error: can\'t find command'
+            err = Error("Command is not found", "VALIDATION", raw_command)
+            return Result.err(err)
 
-        return command.handle(command_data, context)
+        return command.handle(
+            raw_command.get('data', {}),
+            context
+        )
+
+    def execute_multiple(self, commands: dict, context={}):
+        if len(commands) < 1:
+            return "Error: Invalid Syntax"
+
+        result = {}
+        for cmd in commands:
+            book_or_err: Result = self.execute(cmd, context)
+            result[cmd.get('name')] = book_or_err.match(
+                lambda data: {'data': data, 'error': None},
+                lambda err: {'data': None, 'error': err},
+            )
+
+        return result
 
 
 # Command Interface
@@ -30,5 +53,5 @@ class Command(abc.ABC):
 
     """ Handle the command """
     @abc.abstractstaticmethod
-    def handle(command={}, context={}) -> str:
+    def handle(raw_command: dict, context: dict) -> Result:
         pass
