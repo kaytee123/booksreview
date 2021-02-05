@@ -1,0 +1,48 @@
+  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}" type="text/css" />
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald&family=Quicksand:wght@600&display=swap" rel="stylesheet">
+  <link rel="icon" href="static/images/favicon.png"  type="image/icon">
+  <title>Book Review</title>
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="nav-wrapper teal">
+        <a href="{{url_for('view_books')}}" class="brand-logo center">Book Review</a>
+        <a href="{{url_for('view_books')}}" data-target="mobile-demo" class="sidenav-trigger"><i
+            class="material-icons">menu</i></a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+          <li><a href="{{url_for('view_books')}}">Home</a></li>
+          <li><a href="{{url_for('add_book')}}">Add New Book</a></li>
+        </ul>
+        <ul class="sidenav" id="mobile-demo">
+          <li><a href="{{url_for('view_books')}}"><strong>Home</strong></a></li>
+          <li><a href="{{url_for('add_book')}}"><strong>Add New Book</strong></a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+  {% block content %} {% endblock %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+    integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('.sidenav').sidenav();
+      $('select').formSelect();
+      $('.dropdown-trigger').dropdown();
+      $('.collapsible').collapsible();
+      $('.modal').modal();
+    });
+  </script>
+</body>
+</html>
