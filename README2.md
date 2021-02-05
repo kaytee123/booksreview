@@ -18,7 +18,7 @@ Or run `$ flask run --host=0.0.0.0` to allow access from another computer
 
 ### Request Payload Structure
 
-_**name**_: The name of the command example, `"AddBook"`
+_**name**_: Name of the command example, `"AddBook"`
 
 _**data**_: Data for the command
 
