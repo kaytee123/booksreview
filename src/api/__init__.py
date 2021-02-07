@@ -2,9 +2,9 @@ from flask import Flask, Blueprint, request, jsonify
 from pymongo import MongoClient
 
 
+import config
 from ..shared.result import Result
 from ..shared.command import CommandRunner
-
 
 from . import book
 
@@ -13,17 +13,15 @@ from . import book
 api = Blueprint('api', __name__, url_prefix="/api")
 
 # Database Setup
-uri = 'mongodb://localhost:27017/bookReview'
-mongo = client = MongoClient(uri)
-
-# mongo.drop_database("bookReview")
+# Use config.MONGO_URL_LOCAL for local db
+mongo = client = MongoClient(config.MONGO_URL)
 
 # App Context
 context = {"database": mongo.db}
 
 # Command Runner Setup
 command_runner = CommandRunner()
-command_runner.register(book.commands)
+command_runner.register(book.load_commands())
 
 
 @api.route('/')

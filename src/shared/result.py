@@ -25,10 +25,13 @@ class Result:
 
     @staticmethod
     def err(error: Error):
-        return Result("err", error.to_dict())
+        return Result("err", error)
 
     def match(self, ok_fn, err_fn):
-        return ok_fn(self.__data) if self.__status == "ok" else err_fn(self.__data)
+        if self.__status == "ok":
+            return ok_fn(self.__data)
+
+        return err_fn(self.__data)
 
     def is_ok(self):
         return self.__data if self.__status == 'ok' else False

@@ -1,0 +1,105 @@
+[
+	{
+		"name": "_FindBook",
+		"data": { 
+			"id": "601e64fe34b49b85717bb295"
+		},
+		"meta": {}
+	},
+	
+	{
+		"name": "_AddBook",
+		"data": {
+			"title": "Law of Leadship",
+			"author":  "John C. Maxwell",
+			"coverImageLink": "http://unknown",
+			"purchaseLink": "http://unknown",
+			"genre": "Educative",
+			"summary": "No summary"
+		},
+		"meta": {}
+	},
+	{
+		"name": "_AddBook",
+		"data": {
+			"title": "Law of Emotion",
+			"author":  "John C. Maxwell",
+			"coverImageLink": "http://unknown",
+			"purchaseLink": "http://unknown",
+			"genre": "Educative",
+			"summary": "No summary"
+		},
+		"meta": {}
+	},
+	{
+		"name": "_AddBook",
+		"data": {
+			"title": "The soul of Africa",
+			"author":  "Godstime Israel",
+			"coverImageLink": "http://unknown",
+			"purchaseLink": "http://unknown",
+			"genre": "History",
+			"summary": "No summary"
+		},
+		"meta": {}
+	},
+	
+	{
+		"name": "EditBook",
+		"data": {
+			"id": "601f7f895fa1899c955f9c12",
+			"update": {
+				"title": "Follow Before You Lead",
+				"author":  "Godstime Amakiri",
+				"genre": "Leadership",
+				"summary": "Be humble"
+			}
+		},
+		"meta": {}
+	},
+	
+	{
+		"name": "_FindBooks",
+		"data": {
+			"title": "",
+			"sort": "title",
+			"order": 1,
+			"skip": 1,
+			"take": 0
+		},
+		"meta": {}
+	},
+	
+	{
+		"name": "_RemoveBook",
+		"data": {
+			"id": "601e64fe34b49b85717bb295"
+		},
+		"meta": {}
+	},
+
+	{
+		"name": "_ReviewBook",
+		"data": {
+			"bookId": "601e653234b49b85717bb297",
+			"review": {
+				"name": "Burna Boy",
+				"rating":  5,
+				"review": "Thanks for explain the real truth of my root"
+			}
+		},
+		"meta": {}
+	},
+	{
+		"name": "_ReviewBook",
+		"data": {
+			"bookId": "601e64fe34b49b85717bb295",
+			"review": {
+				"name": "Kate Kobs",
+				"rating":  1,
+				"review": "Super educative"
+			}
+		},
+		"meta": {}
+	}
+]

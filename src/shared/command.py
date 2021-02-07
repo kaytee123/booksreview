@@ -34,10 +34,16 @@ class CommandRunner:
 
         result = {}
         for cmd in commands:
+            command_name: str = cmd.get('name')
+
+            # Ingnore commands the "_"
+            if command_name.startswith('_'):
+                continue
+
             book_or_err: Result = self.execute(cmd, context)
-            result[cmd.get('name')] = book_or_err.match(
+            result[command_name] = book_or_err.match(
                 lambda data: {'data': data, 'error': None},
-                lambda err: {'data': None, 'error': err},
+                lambda err: {'data': None, 'error': err.to_dict()},
             )
 
         return result

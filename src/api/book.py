@@ -1,12 +1,28 @@
 from bson.objectid import ObjectId
+from datetime import datetime
+from pymongo.errors import OperationFailure
+
 from ..shared.command import Command
 from ..shared.filter import Filter
 from ..shared.result import Result, Error
 
+from .review import ReviewList, Review, ReviewListMapper, ReviewMapper
+
 
 class Book:
-    def __init__(self, id, title, author, cover_image_link, purchase_link, genre, summary, created_at, reviews):
-        self.id = id
+    def __init__(
+        self,
+        book_id: str,
+        title: str,
+        author: str,
+        cover_image_link: str,
+        purchase_link: str,
+        genre: str,
+        summary: str,
+        created_at: datetime,
+        reviews: ReviewList
+    ):
+        self.id = book_id
         self.title = title
         self.author = author
         self.cover_image_link = cover_image_link
@@ -17,7 +33,7 @@ class Book:
         self.reviews = reviews
 
     @staticmethod
-    def create(book):
+    def create(book: dict):
         validity = Book.validate(book)
 
         if validity['valid'] is False:
@@ -28,19 +44,19 @@ class Book:
             ))
 
         return Result.ok(Book(
-            id=str(ObjectId(book.get('id'))),
+            book_id=str(ObjectId(book.get('id'))),
             title=book.get('title'),
             author=book.get('author'),
             cover_image_link=book.get('coverImageLink'),
             purchase_link=book.get('purchaseLink'),
             genre=book.get('genre'),
             summary=book.get('summary'),
-            created_at=book.get('createdAt'),
-            reviews=book.get('reviews', [])
+            created_at=book.get('createdAt', datetime.now()),
+            reviews=ReviewList.create(book.get('reviews', []))
         ))
 
     @ staticmethod
-    def validate(book):
+    def validate(book: dict):
         errors = {}
 
         if not book.get('title') or book.get('title') == '':
@@ -72,11 +88,15 @@ class Book:
         }
 
 
+# Mapper
 class BookMapper:
     @staticmethod
-    def to_domain(raw_book):
+    def to_domain(raw_book: dict):
+        raw_reviews = raw_book.get('reviews', [])
+        reviews = ReviewListMapper.to_domain(raw_reviews)
+
         return Book(
-            id=str(raw_book.get('_id', None)),
+            book_id=str(raw_book.get('_id', None)),
             title=raw_book.get('title', None),
             author=raw_book.get('author', None),
             cover_image_link=raw_book.get('coverImageLink', None),
@@ -84,11 +104,17 @@ class BookMapper:
             genre=raw_book.get('genre', None),
             summary=raw_book.get('summary', None),
             created_at=raw_book.get('createdAt', None),
-            reviews=raw_book.get('reviews', None)
+            reviews=reviews
         )
 
     @staticmethod
-    def to_dict(book: Book, id_shape='id'):
+    def to_dict(book: Book, to_db=False):
+        id_shape = '_id' if to_db else 'id'
+        reviews = ReviewListMapper.to_dict(book.reviews)
+
+        if to_db:
+            reviews = ReviewListMapper.to_persistence(book.reviews)
+
         return {
             id_shape: book.id,
             'title': book.title,
@@ -98,38 +124,40 @@ class BookMapper:
             'genre': book.genre,
             'summary': book.summary,
             'createdAt': book.created_at,
-            'reviews': book.reviews
+            'reviews': reviews
         }
 
     @staticmethod
     def for_update(data: dict):
         update = {}
 
-        if data['title']:
+        if data.get('title', None):
             update['title'] = data['title']
-        if data['author']:
+        if data.get('author', None):
             update['author'] = data['author']
-        # if data['coverImageLink']:
-        #     update['coverImageLink'] = data['coverImageLink']
-        # if data['purchaseLink']:
-        #     update['purchaseLink'] = data['purchaseLink']
-        if data['genre']:
+        if data.get('coverImageLink', None):
+            update['coverImageLink'] = data['coverImageLink']
+        if data.get('purchaseLink', None):
+            update['purchaseLink'] = data['purchaseLink']
+        if data.get('genre', None):
             update['genre'] = data['genre']
-        # if data['summary']:
-        #     update['summary'] = data['summary']
+        if data.get('summary', None):
+            update['summary'] = data['summary']
         return update
 
     @staticmethod
     def to_persistence(book: Book):
-        return BookMapper.to_dict(book, id_shape='_id')
+        return BookMapper.to_dict(book, to_db=True)
 
 
+# Repos
 class BookRepo:
 
     @ staticmethod
     def add(book: Book, db):
         books = db['bookReview']['books']
         new_book = BookMapper.to_persistence(book)
+
         doc_id = books.insert_one(new_book).inserted_id
         doc = books.find_one({'_id': doc_id})
 
@@ -139,6 +167,7 @@ class BookRepo:
     def find(query: Filter, db):
         books = db['bookReview']['books']
         qry = {'title': {"$regex": '^'+query.title}}
+
         docs = books.find(qry).sort(query.sort, query.order).limit(
             query.take).skip(query.skip)
 
@@ -170,13 +199,30 @@ class BookRepo:
     @ staticmethod
     def update(book_id: str, update: dict, db):
         books = db['bookReview']['books']
-        book_update = BookMapper.for_update(update)
-        book_update = {'$set': book_update}
-
-        books.update_one({'_id': book_id}, book_update)
         doc = books.find_one({'_id': book_id})
 
+        if not doc:
+            return Result.err(Error(
+                'Book to not found',
+                'NOTFOUND'
+            ))
+
+        book_update = BookMapper.for_update(update)
+        book_update = {'$set': book_update}
+        books.update_one({'_id': book_id}, book_update)
+
+        doc = books.find_one({'_id': book_id})
         return Result.ok(BookMapper.to_domain(doc))
+
+    @ staticmethod
+    def add_review(book_id: str, review: Review, db):
+        books = db['bookReview']['books']
+        raw_review = ReviewMapper.to_persistence(review)
+        book_update = {'$push': {'reviews': raw_review}}
+
+        books.update_one({'_id': book_id}, book_update)
+
+        return Result.ok(review)
 
     @ staticmethod
     def remove(book_id, db):
@@ -220,12 +266,12 @@ class AddBook(Command):
         saved_or_err = BookRepo.add(
             book_or_err.is_ok(),
             context.get('database')
-        ).match(
+        )
+
+        return saved_or_err.match(
             lambda book: Result.ok(BookMapper.to_dict(book)),
             lambda err: Result.err(err)
         )
-
-        return saved_or_err
 
 
 class FindBook(Command):
@@ -244,12 +290,10 @@ class FindBook(Command):
             context.get('database', None)
         )
 
-        result = book_or_err.match(
+        return book_or_err.match(
             lambda book: Result.ok(BookMapper.to_dict(book)),
             lambda err: Result.err(err)
         )
-
-        return result
 
 
 class FindBooks(Command):
@@ -289,12 +333,6 @@ class EditBook(Command):
 
         if not data.get('update', None):
             return Result.err(Error('Book update is requires', 'USERINPUT'))
-
-        # Validate Update
-        # update_or_err = Book.validate_update(data['update'])
-
-        # if update_or_err.is_err():
-        #     return update_or_err
 
         # Updating
         book_or_err = BookRepo.update(
@@ -337,15 +375,42 @@ class RemoveBook(Command):
 
 class ReviewBook(Command):
     @staticmethod
-    def name():
-        return 'ReviewBook'
+    def name(): return 'ReviewBook'
 
     @staticmethod
     def handle(data, context):
-        pass
+        # Checking Parameters
+        if not data.get('bookId', None):
+            return Result.err(Error('Book id is requires', 'USERINPUT'))
+
+        if not data.get('review', None):
+            return Result.err(Error('Review is requires', 'USERINPUT'))
+
+        # Creating Review
+        review_or_err = Review.create(data['review'])
+        if review_or_err.is_err():
+            return review_or_err
+
+        # Adding review to book
+        new_review = review_or_err.is_ok()
+        saved_review_or_err = BookRepo.add_review(
+            data['bookId'],
+            new_review,
+            context.get('database', None)
+        )
+
+        result = saved_review_or_err.match(
+            lambda review: Result.ok(ReviewMapper.to_dict(review)),
+            lambda err: Result.err(err)
+        )
+
+        return result
 
 
-commands = [AddBook, FindBook, FindBooks, EditBook, RemoveBook]
+def load_commands():
+    """ Book Commands for CommandRunner """
+    return [AddBook, FindBook, FindBooks,
+            EditBook, RemoveBook, ReviewBook]
 
 
 # Service
@@ -355,21 +420,21 @@ class BookService:
         return AddBook.handle(data, context)
 
     @ staticmethod
-    def find_book(query, context):
-        return FindBook.handle(query, context)
+    def find_book(data, context):
+        return FindBook.handle(data, context)
 
     @ staticmethod
-    def find_books(query, context):
-        return FindBooks.handle(query, context)
+    def find_books(data, context):
+        return FindBooks.handle(data, context)
 
     @ staticmethod
-    def edit_book(query, context):
-        pass
+    def edit_book(data, context):
+        return EditBook.handle(data, context)
 
     @ staticmethod
-    def remove_book(query, context):
-        pass
+    def remove_book(data, context):
+        return EditBook.handle(data, context)
 
     @ staticmethod
-    def review_book(query, context):
-        pass
+    def review_book(data, context):
+        return ReviewBook.handle(data, context)

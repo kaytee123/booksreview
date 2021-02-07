@@ -1,0 +1,27 @@
+{
+	"author": "Godstime Israel",
+	"coverImageLink": "http://unknown",
+	"createdAt": "Sat, 06 Feb 2021 09:45:22 GMT",
+	"genre": "History",
+	"purchaseLink": "http://unknown",
+	"reviews": {
+	  "averageRating": 5.0,
+	  "reviews": [
+		{
+		  "createdAt": null,
+		  "id": "601fbb8f0b4ec4890a09d659",
+		  "name": "Burna Boy",
+		  "rating": 5,
+		  "review": "Thanks for explain the real truth of my root"
+		},
+		{
+		  "createdAt": "Sat, 06 Feb 2021 23:42:40 GMT",
+		  "id": "601fbb8f0b4ec4890a09d65a",
+		  "name": "Burna Boy",
+		  "rating": 5,
+		  "review": "Thanks for explain the real truth of my root"
+		}
+	  ]
+	}
+
+}
