@@ -10,3 +10,4 @@ instance/
 htmlcov/
 .pytest_cache/
 .coverage
+.vscode
