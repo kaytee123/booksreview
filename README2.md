@@ -1,3 +1,5 @@
+## Create an environment
+
 Setting up an enviroment
 
 ```sh
@@ -9,6 +11,8 @@ Setting up an enviroment: Window
 ```sh
 py -3 -m venv venv
 ```
+
+---
 
 ## Activate the environment
 
@@ -49,6 +53,32 @@ $ flask run
 ```
 
 Or run `$ flask run --host=0.0.0.0` to allow access from another computer
+
+---
+
+## Deployment with Heroku
+
+Create a Heroku app
+
+```sh
+  heroku create <app-name>
+```
+
+Create a Heroku appAdd Heroku App to Remote
+
+```sh
+  $ git init
+  $ heroku git:remote -a <heroku-app-name>
+  $ git remote -v
+```
+
+Deploy the App to Heroku
+
+```sh
+   $ git add .
+   $ git commit -m "Init deploy"
+   $ git push heroku master
+```
 
 ---
 
