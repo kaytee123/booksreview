@@ -1,5 +1,6 @@
 from flask import Flask, Blueprint, request, jsonify
 from pymongo import MongoClient
+import dns
 
 
 import config
@@ -10,7 +11,7 @@ from . import book
 
 
 # # Setting up App
-api = Blueprint('api', __name__, url_prefix="/api")
+api = Blueprint("api", __name__, url_prefix="/api")
 
 # Database Setup
 # Use config.MONGO_URL_LOCAL for local db
@@ -24,12 +25,12 @@ command_runner = CommandRunner()
 command_runner.register(book.load_commands())
 
 
-@api.route('/')
+@api.route("/")
 def index():
-    return '<h1> Book Review API </h1>'
+    return "<h1> Book Review API </h1>"
 
 
-@api.route('/v1', methods=['POST'])
+@api.route("/v1", methods=["POST"])
 def handler():
     commands = request.get_json()
     result = command_runner.execute_multiple(commands, context)

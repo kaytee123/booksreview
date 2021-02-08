@@ -1,11 +1,51 @@
+Setting up an enviroment
+
 ```sh
 python3 -m venv venv
-pip install -r requirements.txt
+```
 
-export FLASK_APP=run.py
+Setting up an enviroment: Window
+
+```sh
+py -3 -m venv venv
+```
+
+## Activate the environment
+
+Before you work on your project, activate the corresponding environment:
+
+```sh
+. venv/bin/activate
+```
+
+For Windows:
+
+```sh
+venv\Scripts\activate
+```
+
+## Installing Project Requirements
+
+```sh
+pip install -r requirements.txt
+```
+
+## Running Flask App
+
+```sh
+$ export FLASK_APP=run.py
+
 $ flask run
  * Running on http://127.0.0.1:5000/
+```
 
+on Windows:
+
+```sh
+set FLASK_APP=run.py
+
+$ flask run
+ * Running on http://127.0.0.1:5000/
 ```
 
 Or run `$ flask run --host=0.0.0.0` to allow access from another computer
@@ -23,6 +63,9 @@ _**name**_: Name of the command example, `"AddBook"`
 _**data**_: Data for the command
 
 _**meta**_: Metadata for the command
+
+Please note that you can add an underscore(\_) to command name so it is ingnored.
+For example, `_AddBook`
 
 ---
 
