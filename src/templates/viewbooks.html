@@ -5,7 +5,7 @@
       <div class="collapsible-header"><i class="material-icons">sort</i>Sort Books</div>
       <div class="collapsible-body">
         <div class="row search-container">
-          <form action="{{url_for('sort_books')}}" method="POST">
+          <form action="{{url_for('.index')}}" method="POST">
             <div class="col s6">
               <p>By</p>
               <p>
@@ -84,7 +84,7 @@
     <div class="card">
       <div class="card hoverable">
         <div class="card-image waves-effect waves-block waves-light">
-          <img class="activator card-image-element" src="{{book.link}}" alt="Book Cover for {{book.title}}" />
+          <img class="activator card-image-element" src="{{book.coverImageLink}}" alt="Book Cover for {{book.title}}" />
         </div>
         <div class="card-content">
           <div class="card-title activator grey-text text-darken-4">
@@ -98,18 +98,19 @@
             <div class="col s6">
               <p class="center-align">
                 {% if book.reviews|length == 1 %}
-                  <a href="{{url_for('view_reviews', book_id=book._id)}}"
+                  <a href="{{url_for('view_reviews', book_id=book.id)}}"
                     class="waves-effect waves-light btn">{{book.reviews|length}} Review</a>
                 {% else %}
-                  <a href="{{url_for('view_reviews', book_id=book._id)}}"
+                  <a href="{{url_for('view_reviews', book_id=book.id)}}"
                     class="waves-effect waves-light btn">{{book.reviews|length}} Reviews</a>                
                 {% endif %}
               </p>
             </div>
             <div class="col s6">
               <div class="rating-container">
-                <img src="{{url_for('static', filename='images/stars/star-')}}{{book.rating}}.png"
-                  alt="{{book.rating}} stars image" class="star-rating responsive-img" />
+                <!-- <img src="{{url_for('static', filename='images/stars/star-')}}{{book.reviews.averageRating}}.png"
+                  alt="{{book.rating}} stars image" class="star-rating responsive-img" /> -->
+                  {{book.reviews.averageRating}}
               </div>
             </div>
           </div>
@@ -117,13 +118,13 @@
           <div class="row">
             <div class="col s6">
               <p class="center-align">
-                <a href="{{url_for('add_review', book_id=book._id)}}" class="waves-effect waves-light btn">Write
+                <a href="{{url_for('add_review', book_id=book.id)}}" class="waves-effect waves-light btn">Write
                   Review</a>
               </p>
             </div>
             <div class="col s6">
               <p class="center-align">
-                <a href="{{book.buy_link}}" target="_blank" class="waves-effect waves-light btn"><i
+                <a href="{{book.purchaseLink}}" target="_blank" class="waves-effect waves-light btn"><i
                     class="material-icons left">shopping_cart</i>BUY NOW!</a>
               </p>
             </div>
@@ -137,30 +138,31 @@
             <p class="center-align">{{book.genre.title()}}
           </div>
           <div class="star-rating-container">
-            <img src="{{url_for('static', filename='images/stars/star-')}}{{book.rating}}.png"
-              alt="{{book.rating}} stars image" class="star-rating responsive-img" />
+            <!-- <img src="{{url_for('static', filename='images/stars/star-')}}{{book.book.reviews.averageRating}}.png"
+              alt="{{book.rating}} stars image" class="star-rating responsive-img" /> -->
+              {{book.reviews.averageRating}}
           </div>
           <p>{{book.summary}}</p>
           <hr />
           <p class="center-align">
                 {% if book.reviews|length == 1 %}
-                  <a href="{{url_for('view_reviews', book_id=book._id)}}"
+                  <a href="{{url_for('view_reviews', book_id=book.id)}}"
                     class="waves-effect waves-light btn">{{book.reviews|length}} Review</a>
                 {% else %}
-                  <a href="{{url_for('view_reviews', book_id=book._id)}}"
+                  <a href="{{url_for('view_reviews', book_id=book.id)}}"
                     class="waves-effect waves-light btn">{{book.reviews|length}} Reviews</a>                
                 {% endif %}
           </p>
           <p class="center-align">
-            <a href="{{url_for('add_review', book_id=book._id)}}" class="waves-effect waves-light btn">Write Review</a>
+            <a href="{{url_for('add_review', book_id=book.id)}}" class="waves-effect waves-light btn">Write Review</a>
           </p>
           <p class="center-align">
-            <a href="{{book.buy_link}}" target="_blank" class="waves-effect waves-light btn"><i
+            <a href="{{book.purchaseLink}}" target="_blank" class="waves-effect waves-light btn"><i
                 class="material-icons left">shopping_cart</i>BUY NOW!</a>
           </p>
           <hr />
           <p class="center-align">
-            <a href="{{url_for('edit_book', book_id=book._id)}}" class="waves-effect waves-light btn"><i
+            <a href="{{url_for('view.edit_book', book_id=book.id)}}" class="waves-effect waves-light btn"><i
                 class="material-icons left">create</i>Edit Book</a>
           </p>
           <hr />
@@ -171,7 +173,7 @@
   {% endfor %}
   <div class="row">
     <div class="col s12">
-      <p class="center-align"><a href="{{url_for('add_book')}}"
+      <p class="center-align"><a href="{{url_for('view.add_book')}}"
         class="waves-effect waves-light btn-large">Add Book</a></p>
     </div>
   </div>
