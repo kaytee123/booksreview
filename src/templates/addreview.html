@@ -2,10 +2,10 @@
 {% block content %}
 <div class="center-align container section">
   <h5>Write a review for</h5>
-  <h3>{{book.title.title()}}</h3>
+  <h3>{{book.title}}</h3>
 </div>
 <div class="row container section">
-  <form class="col s12" action="{{url_for('insert_review')}}" method="POST">
+  <form class="col s12" action="/add_review/{{book.id}}" method="POST">
     <div class="row">
       <div class="input-field col s12">
         <i class="material-icons prefix">face</i>
@@ -17,11 +17,11 @@
         <select id="rating" name="rating" size="6" required>
           <option value="" disabled selected>Rating</option>
           <option value="0">0 Star</option>
-          <option value="2">1 Star</option>
-          <option value="4">2 Star</option>
-          <option value="6">3 Star</option>
-          <option value="8">4 Star</option>
-          <option value="10">5 Star</option>
+          <option value="1">1 Star</option>
+          <option value="2">2 Star</option>
+          <option value="3">3 Star</option>
+          <option value="4">4 Star</option>
+          <option value="5">5 Star</option>
         </select>
         <label>Star Rating</label>
       </div>
@@ -31,7 +31,6 @@
       <textarea name="review" id="review" class="materialize-textarea" required></textarea>
       <label for="review">Review</label>
     </div>
-    <input type="hidden" name="book_id" value="{{book._id}}" />
     <div class="row">
       <div class="col s6 margin-top">
         <button class="btn waves-effect waves-light update-buttons-resize" type="submit">
@@ -40,7 +39,7 @@
         </button>
       </div>
       <div class="col s6 margin-top">
-        <a href="{{url_for('view_books')}}" class="waves-effect waves-light update-buttons-resize red btn right">Cancel</a>
+        <a href="{{url_for('view.index')}}" class="waves-effect waves-light update-buttons-resize red btn right">Cancel</a>
       </div>
     </div>
   </form>

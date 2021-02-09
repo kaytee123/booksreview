@@ -1,32 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="center-align section container">
-    <h3>{{bookTitle.title()}} reviews</h3>
-    <h4>Average Rating - <img src="{{url_for('static', filename='images/stars/star-')}}{{bookRating}}.png"
-      alt="stars rating image" class="main-review-rating "> </h4>
-      {% if review_num == 1 %}
-        <p>From {{review_num}} review</p>
+    <h3>{{book.title}} reviews</h3>
+    <h4>Average Rating - {{book.reviews.averageRating}}
+      {% if book.reviews.reviews|length == 1 %}
+        <p>From {{book.reviews.reviews|length}} review</p>
       {% else %}
-        <p>From {{review_num}} reviews</p>
+        <p>From {{book.reviews.reviews|length}} reviews</p>
       {% endif %}
 </div>
 <div class="row section container">
-    {% for review in reviews %}
+    {% for review in book.reviews.reviews %}
     <div class="row">
         <div class="col s12">
             <div class="card grey lighten-3">
                 <div class="card-content black-text">
-                    <span class="card-title valign-wrapper">{{review.reviewer.title()}}'s review</span>
-                    <img src="{{url_for('static', filename='images/stars/star-')}}{{review.rating}}.png"
-                            alt="{{review.rating}} stars image" class="review-rating">
+                    <span class="card-title valign-wrapper">{{review.name}}'s review</span>
+                   <p  class="review-rating">Rating: {{review.rating}}</p>
                     <p>{{review.review}}</p>
                     <div class="card-action">
-                      <a href="{{url_for('edit_review', book_id=book_id, review_id=review._id)}}"
+                      <!-- <a href="/edit_review/{{book.id}}/{{review.id}}"
                         class="transparent left orange-text btn-flat"><i
                         class="material-icons">create</i></a>
-                      <a href="{{url_for('delete_review', book_id=book_id, review_id=review._id)}}"
+                      <a href="/delete_review/{{book.id}}/{{review.id}}"
                         class="transparent right red-text btn-flat"><i
-                        class="material-icons">delete_forever</i></a>
+                        class="material-icons">delete_forever</i></a> -->
 
                     </div>
                 </div>
@@ -34,7 +32,7 @@
         </div>
     </div>
     {% endfor %}
-    <p class="center-align"><a href="{{url_for('add_review', book_id=book_id)}}"
+    <p class="center-align"><a href="/add_review/{{book.id}}"
             class="waves-effect waves-light btn">Write Review</a></p>
 </div>
 {% endblock %}
