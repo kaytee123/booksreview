@@ -3,7 +3,7 @@
 
 
 gunicorn==20.0.4 
-dnspython==2.1.0
+dnspython==2.6.0rc1
 PyMongo==3.11.2
 Flask-PyMongo==2.3.0 
 Flask==1.1.2
