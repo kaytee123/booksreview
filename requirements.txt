@@ -2,7 +2,7 @@
 # Usage: pip install -r requirements.txt
 
 
-gunicorn==20.0.4 
+gunicorn==21.2.0 
 dnspython==2.1.0
 PyMongo==3.11.2
 Flask-PyMongo==2.3.0 
